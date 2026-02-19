@@ -1,0 +1,12 @@
+.vs/
+out/
+build/
+x64/
+x86/
+Debug/
+Release/
+*.exe
+*.dll
+*.pdb
+*.obj
+*.o
