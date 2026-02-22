@@ -3,11 +3,7 @@
 CPU::CPU(MemoryUnit& memoryUnit) :
 	m_memoryUnit{ memoryUnit }
 {
-	m_A = 0u;
-	m_PC = 0u;
-	m_IR = 0u;
-	m_ZeroFlag = false;
-	m_HaltFlag = false;
+	Reset();
 }
 
 void CPU::Step()
@@ -55,6 +51,15 @@ void CPU::Step()
 		m_HaltFlag = true;
 		return;
 	}
+}
+
+void CPU::Reset()
+{
+	m_A = 0u;
+	m_PC = 0u;
+	m_IR = 0u;
+	m_ZeroFlag = false;
+	m_HaltFlag = false;
 }
 
 uint8_t CPU::GetA() const

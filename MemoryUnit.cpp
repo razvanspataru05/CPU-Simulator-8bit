@@ -2,7 +2,7 @@
 
 MemoryUnit::MemoryUnit()
 {
-	Reset();
+	std::fill(m_memory.begin(), m_memory.end(), 0x00);
 }
 
 const std::array<uint8_t, 256>& MemoryUnit::GetMemory() const
@@ -20,9 +20,9 @@ void MemoryUnit::Write(uint8_t address, uint8_t value)
 	m_memory[address] = value;
 }
 
-void MemoryUnit::Reset()
+void MemoryUnit::Reset(const std::array<uint8_t, 256>& initialMemory)
 {
-	std::fill(m_memory.begin(), m_memory.end(), 0u);
+	m_memory = std::move(initialMemory);
 }
 
 void MemoryUnit::Load(uint8_t startAddress, const std::vector<uint8_t>& values)

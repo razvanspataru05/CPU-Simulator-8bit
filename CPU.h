@@ -7,6 +7,7 @@ public:
 	CPU(MemoryUnit& m_memoryUnit);
 
 	void Step();
+	void Reset();
 
 	[[nodiscard]] uint8_t GetA() const;
 	[[nodiscard]] uint8_t GetPC() const;

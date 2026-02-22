@@ -102,14 +102,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>"C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\include;"C:\Users\razva\Desktop\An2\CPU Simulator\include"</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\lib"</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics-d.lib;sfml-system-d.lib;sfml-window-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -120,14 +120,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>"C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\include"</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\include;"C:\Users\razva\Desktop\An2\CPU Simulator\include"</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"C:\Users\razva\Desktop\SFML-3.0.2-windows-vc17-64-bit\SFML-3.0.2\lib"</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics.lib;sfml-system.lib;sfml-window.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -144,6 +144,11 @@
     <ClCompile Include="CPU Simulator.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="Dissasembler.cpp" />
+    <ClCompile Include="include\imgui-SFML.cpp" />
+    <ClCompile Include="include\imgui.cpp" />
+    <ClCompile Include="include\imgui_draw.cpp" />
+    <ClCompile Include="include\imgui_tables.cpp" />
+    <ClCompile Include="include\imgui_widgets.cpp" />
     <ClCompile Include="MemoryUnit.cpp" />
   </ItemGroup>
   <ItemGroup>

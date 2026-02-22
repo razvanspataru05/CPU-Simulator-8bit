@@ -1,68 +1,14 @@
+#include "SFML/Graphics.hpp"
+#include "imgui.h"
+#include "imgui-SFML.h"
+
 #include "framework.h"
-#include <iostream>
-#include <Windows.h>
-#include <io.h>
 #include <fcntl.h>
 #include <sstream>
-#include <iomanip>
 
-#include "CPU Simulator.h"
 #include "MemoryUnit.h"
 #include "CPU.h"
 #include "Dissasembler.h"
-#include "SFML/Graphics.hpp"
-
-constexpr uint8_t CELL_HEIGHT{ 40u };
-constexpr uint8_t CELL_WIDTH{ 40u };
-constexpr uint8_t Y_START{ 50u };
-constexpr uint8_t X_START{ 150u };
-constexpr uint8_t PADDING{ 40u };
-
-void static CreateConsole()
-{
-    AllocConsole();
-    FILE* dummy;
-
-    freopen_s(&dummy, "CONOUT$", "w", stdout);
-    freopen_s(&dummy, "CONIN$", "r", stdin);
-    freopen_s(&dummy, "CONOUT$", "w", stderr);
-    
-    std::ios::sync_with_stdio;
-}
-
-void static SetupText(const CPU& cpu, std::stringstream& ss)
-{
-    ss << "Program Counter: 0x"
-        << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
-        << static_cast<int>(cpu.GetPC()) << "\n\n";
-
-    ss << "Instruction Register: 0x"
-        << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
-        << static_cast<int>(cpu.GetIR()) << "\n\n";
-
-    ss << "A (Accumulator) Register: 0x"
-        << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
-        << static_cast<int>(cpu.GetA());
-}
-
-void static SetupAssemblyCode(const Dissasembler& dissasembler, 
-    const MemoryUnit& memoryUnit, std::stringstream& ss)
-{
-    for (size_t index = 0; index < memoryUnit.GetMemory().size(); index++)
-    {
-        uint8_t opcode = memoryUnit.Read(index);
-        const auto instruction = dissasembler.GetInstructionDef(opcode);
-        ss << instruction.mnemonic;
-        if (instruction.size == 2)
-        {
-            uint8_t nextByte = memoryUnit.Read(index + 1);
-            ss << " " << static_cast<int>(nextByte);
-            index++;
-        }
-        ss << "\n";
-        if (opcode == 0xFF) break;
-    }
-}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -70,94 +16,120 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_ int       nCmdShow)
 {
 
-    CreateConsole();
-    std::cout << "Consola\n";
     MemoryUnit memory;
     memory.ParseValues();
+    const std::array<uint8_t, 256> initialMemory = memory.GetMemory();
 
     CPU cpu(memory);
     Dissasembler dissasembler;
     const size_t memorySize = memory.GetMemory().size();
 
     sf::Font font;
-    if (!font.openFromFile("Roboto_Mono.ttf"))
-    {
-        throw std::runtime_error("Roboto_Mono.ttf not found");
-        return 1;
-    }
 
     sf::RenderWindow window(sf::VideoMode({1920, 1080}), "CPU Simulator");
     window.setFramerateLimit(60);
+
+    ImGui::SFML::Init(window);
+    sf::Clock deltaClock;
 
     while (window.isOpen())
     {
         while (const std::optional event = window.pollEvent())
         {
+            ImGui::SFML::ProcessEvent(window, event.value());
+            if (event->is<sf::Event::KeyPressed>())
+            {
+                const auto keyCode = event->getIf<sf::Event::KeyPressed>();
+                if (keyCode->code == sf::Keyboard::Key::Space)
+                {
+                    cpu.Step();
+                }
+                else if (keyCode->code == sf::Keyboard::Key::R)
+                {
+                    memory.Reset(initialMemory);
+                    cpu.Reset();
+                }
+            }
+
             if (event->is<sf::Event::Closed>())
             {
                 window.close();
             }
         }
-        window.clear(sf::Color::White);
+        ImGui::SFML::Update(window, deltaClock.restart());    
 
-        sf::Text assemblyText(font);
-        assemblyText.setCharacterSize(24);
-        assemblyText.setFillColor(sf::Color::Black);
-        assemblyText.setPosition({1000, 50});
+        window.clear(sf::Color(50, 50, 50));
 
-        std::stringstream assemblyStringStream;
-        SetupAssemblyCode(dissasembler, memory, assemblyStringStream);
-        assemblyText.setString(assemblyStringStream.str());
-        window.draw(assemblyText);
-
-        float xCoord = X_START;
-        float yCoord = Y_START;
-        sf::RectangleShape memoryCell;
-        sf::Text text(font);
-        sf::Text programCounterText(font);
-        programCounterText.setPosition({ 50, 750 });
-        programCounterText.setCharacterSize(24);
-        programCounterText.setFillColor(sf::Color::Black);
-
-        std::stringstream ss;
-        SetupText(cpu, ss);
-        programCounterText.setString(ss.str());
-        
-        window.draw(programCounterText);
-
-        for (size_t index = 0; index < memorySize; index++)
+        ImGui::Begin("CPU State");
+        ImGui::Text("Program Counter: 0x%02X", cpu.GetPC());
+        ImGui::Text("Instruction Register: 0x%02X", cpu.GetIR());
+        ImGui::Text("A (Accumulator): %d", cpu.GetA());
+        ImGui::Text("");
+        if (cpu.GetZeroFlag())
         {
-            if (index != 0 && index % 16 == 0)
-            {
-                xCoord = X_START;
-                yCoord += PADDING;
-            }
-            std::stringstream ss;
-            ss << "0x" << std::uppercase << std::setfill('0') << std::setw(2) <<
-                std::hex << static_cast<int>(memory.Read(static_cast<uint8_t>(index)));
-            text.setCharacterSize(12);
-            text.setFillColor(sf::Color::Black);
-            text.setOutlineColor(sf::Color::Red);
-            text.setOutlineThickness(1.f);
-            text.setString(ss.str());
-            memoryCell.setSize({ CELL_HEIGHT, CELL_WIDTH });
-            memoryCell.setFillColor(sf::Color(128, 128, 128));
-            memoryCell.setPosition({ xCoord, yCoord});
-            memoryCell.setOutlineColor(sf::Color::Black);
-            memoryCell.setOutlineThickness(2.f);
-            auto bounds = text.getLocalBounds();
-            text.setPosition({
-                memoryCell.getPosition().x + memoryCell.getSize().x / 2.f
-                - bounds.size.x / 2.f - bounds.position.x,
-                memoryCell.getPosition().y + memoryCell.getSize().y / 2.f
-                - bounds.size.y / 2.f - bounds.position.y
-                });
-            window.draw(memoryCell);
-            window.draw(text);
-            xCoord += PADDING;
+            ImGui::Text("Zero Flag: True");
         }
+        else ImGui::Text("Zero Flag: False");
+
+        if (cpu.GetHaltFlag())
+        {
+            ImGui::Text("Halt Flag: True");
+        }
+        else ImGui::Text("Halt Flag: False");
+        ImGui::End();
+        
+        ImGui::Begin("Disassembly");
+        for (size_t index = 0; index < memory.GetMemory().size(); ++index)
+        {
+            uint8_t opcode = memory.Read(static_cast<uint8_t>(index));
+            const InstructionDef instruction = dissasembler.GetInstructionDef(opcode);
+            if (instruction.size == 2)
+            {
+                if (index == cpu.GetPC())
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+                }
+                else 
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+
+                uint8_t nextByte = memory.Read(static_cast<uint8_t>(index+1));
+                ++index;
+                ImGui::Text("0X%02x: %s %d", opcode, instruction.mnemonic.c_str(), nextByte);
+                ImGui::PopStyleColor();
+            }
+            else
+            {
+                if (index == cpu.GetPC())
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 255, 255, 255));
+
+                ImGui::Text("0X%02x: %s", opcode, instruction.mnemonic.c_str());
+                ImGui::PopStyleColor();
+            }
+            if (opcode == 0xFF) break;
+        }
+        ImGui::End();
+
+        ImGui::Begin("Memory View");
+
+        if (ImGui::BeginTable("MemoryTable", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+        {
+            for (size_t index = 0; index < 256; ++index)
+            {
+                ImGui::TableNextColumn();
+                ImGui::Text("0x%02X", memory.Read(static_cast<uint8_t>(index)));
+            }
+            ImGui::EndTable();
+        }
+        ImGui::End();
+
+        ImGui::SFML::Render(window);
         window.display();
     }
 
+    ImGui::SFML::Shutdown();
     return 0;
 }
