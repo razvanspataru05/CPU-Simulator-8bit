@@ -15,74 +15,376 @@ void CPU::Step()
 
 	switch (m_IR)
 	{
-	case 0x00:
+	case 0x00: // NOP 1by
 		return;
-	case 0x01:
-		m_A = m_memoryUnit.Read(m_PC);
-		m_PC++;
+
+	case 0x01: // LDA_IM 2by
+		m_A = m_memoryUnit.Read(m_PC++);
 		return;
-	case 0x02:
+
+	case 0x02: // LDA_DIR 3by
 	{
-		auto operand = m_memoryUnit.Read(m_PC);
-		m_A = m_memoryUnit.Read(operand);
-		m_PC++;
-		return;
-	}	
-	case 0x03:
-	{
-		auto operand = m_memoryUnit.Read(m_PC);
-		m_memoryUnit.Write(operand, m_A);
-		m_PC++;
+		uint16_t address = ComputeAddress();
+		m_A = m_memoryUnit.Read(address);
 		return;
 	}
-	case 0x04:
-		m_A = m_A + m_memoryUnit.Read(m_PC);
-		m_PC++;
-		m_ZeroFlag = m_A == 0;
+
+	case 0x03: // LDA_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		m_A = ReadRegister(selector);
 		return;
-	case 0x05:
-		m_PC = m_memoryUnit.Read(m_PC);
+	}
+
+	case 0x04: // STA_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_memoryUnit.Write(address, m_A);
 		return;
-	case 0x06:
-		if (m_ZeroFlag) m_PC = m_memoryUnit.Read(m_PC);
-		else m_PC++;
+	}
+
+	case 0x05: // LDB_IM 2by
+	{
+		m_B = m_memoryUnit.Read(m_PC++);
 		return;
-	case 0xFF:
-		m_HaltFlag = true;
+	}
+
+
+	case 0x06: // LDB_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_B = m_memoryUnit.Read(address);
 		return;
+	}
+
+	case 0x07: // LDB_REG 3by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		m_B = ReadRegister(selector);
+		return;
+	}
+
+	case 0x08: // STB_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_memoryUnit.Write(address, m_B);
+		return;
+	}
+
+	case 0x09: // LDC_IM 2by
+	{
+		m_C = m_memoryUnit.Read(m_PC++);
+		return;
+	}
+
+	case 0x0A: // LDC_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_C = m_memoryUnit.Read(address);
+		return;
+	}
+
+	case 0x0B: // LDC_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		m_C = ReadRegister(selector);
+		return;
+	}
+
+	case 0x0C: // STC_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_memoryUnit.Write(address, m_C);
+		return;
+	}
+
+	case 0x0D: // LDD_IM 2by
+	{
+		m_D = m_memoryUnit.Read(m_PC++);
+		return;
+	}
+
+	case 0x0E: // LDD_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_D = m_memoryUnit.Read(address);
+		return;
+	}
+
+	case 0x0F: // LDD_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		m_D = ReadRegister(selector);
+		return;
+	}
+
+	case 0x10: // STD_DIR 3by
+	{
+		uint16_t address = ComputeAddress();
+		m_memoryUnit.Write(address, m_D);
+		return;
+	}
+
+	case 0x20: // ADD_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		uint16_t result = m_A + operand;
+		m_CarryFlag = (result > 0xFF);
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, operand, true);
+		return;
+	}
+
+	case 0x21: // ADD_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		uint8_t reg = ReadRegister(selector);
+		uint16_t result = m_A + reg;
+		m_CarryFlag = (result > 0xFF);
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, reg, true);
+		return;
+	}
+
+	case 0x22: // ADC_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		uint16_t result = m_A + operand + (m_CarryFlag ? 1 : 0);
+		m_CarryFlag = (result > 0xFF);
+
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, operand, true);
+		return;
+	}
+
+	case 0x23: // ADC_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		uint8_t reg = ReadRegister(selector);
+		uint16_t result = m_A + reg + (m_CarryFlag ? 1 : 0);
+		m_CarryFlag = (result > 0xFF);
+
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, reg, true);
+		return;
+	}
+
+	case 0x24: // SUB_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);	
+		uint8_t oldA = m_A;
+		m_CarryFlag = (operand > m_A);
+		m_A -= operand;
+		UpdateFlags(m_A, oldA, operand, false);
+		return;
+	}
+
+	case 0x25: // SUB_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		uint8_t reg = ReadRegister(selector);
+		m_CarryFlag = (reg > m_A);
+		m_A -= reg;
+		UpdateFlags(m_A, oldA, reg, false);
+		return;
+	}
+
+	case 0x26: // SBC_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		bool oldCarry = m_CarryFlag;
+		uint16_t result = m_A - operand - (oldCarry ? 1 : 0);
+
+		m_CarryFlag = (m_A < operand + (oldCarry ? 1 : 0));
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, operand, false);
+		return;
+	}
+
+	case 0x27: // SBC_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t oldA = m_A;
+		bool oldCarry = m_CarryFlag;
+		uint8_t reg = ReadRegister(selector);
+		uint16_t result = m_A - reg - (oldCarry ? 1 : 0);
+
+		m_CarryFlag = (m_A < reg + (oldCarry ? 1 : 0));
+		m_A = static_cast<uint8_t>(result);
+		UpdateFlags(m_A, oldA, reg, false);
+		return;
+	}
+
+	case 0x28: // INC 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t result = ReadRegister(selector) + 1;
+		WriteRegister(selector, result);
+		UpdateFlags(result);
+		return;
+	}
+
+	case 0x29: //DEC 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t result = ReadRegister(selector) - 1;
+		WriteRegister(selector, result);
+		UpdateFlags(result);
+		return;
+	}
+
+	case 0x2A: //MUL_IM 2by
+	{
+		m_A *= m_memoryUnit.Read(m_PC++);
+		UpdateFlags(m_A);
+		return;
+	}
+
+	case 0x2B: //MUL_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		m_A *= ReadRegister(selector);
+		UpdateFlags(m_A);
+		return;
+	}
+
 	}
 }
 
 void CPU::Reset()
 {
 	m_A = 0u;
+	m_B = 0u;
+	m_C = 0u;
+	m_D = 0u;
 	m_PC = 0u;
 	m_IR = 0u;
 	m_ZeroFlag = false;
+	m_CarryFlag = false;
+	m_NegativeFlag = false;
+	m_OverflowFlag = false;
 	m_HaltFlag = false;
 }
 
-uint8_t CPU::GetA() const
+uint8_t CPU::ReadRegister(uint8_t selector) const noexcept
+{
+	switch (selector)
+	{
+	case 0x00: return m_A;
+	case 0x01: return m_B;
+	case 0x02: return m_C;
+	case 0x03: return m_D;
+	default: return 0x00;
+	}
+}
+
+void CPU::WriteRegister(uint8_t selector, uint8_t value)
+{
+	switch (selector)
+	{
+	case 0x00: m_A = value; break;
+	case 0x01: m_B = value; break;
+	case 0x02: m_C = value; break;
+	case 0x03: m_D = value; break;
+	}
+}
+
+void CPU::UpdateFlags(uint8_t result)
+{
+	m_ZeroFlag = (result == 0);
+	m_NegativeFlag = (result & 0x80) != 0;
+}
+
+void CPU::UpdateFlags(uint8_t result, uint8_t a, uint8_t operand, bool isAdd)
+{
+	m_ZeroFlag = (result == 0);
+	m_NegativeFlag = (result & 0x80) != 0;
+
+	if (isAdd)
+		m_OverflowFlag = (~(a ^ operand) & (a ^ result) & 0x80) != 0;
+	else
+		m_OverflowFlag = ((a ^ operand) & (a ^ result) & 0x80) != 0;
+}
+
+uint8_t CPU::GetA() const noexcept
 {
 	return m_A;
 }
 
-uint8_t CPU::GetPC() const
+uint8_t CPU::GetB() const noexcept
+{
+	return m_B;
+}
+
+uint8_t CPU::GetC() const noexcept
+{
+	return m_C;
+}
+
+uint8_t CPU::GetD() const noexcept
+{
+	return m_D;
+}
+
+uint16_t CPU::GetPC() const noexcept
 {
 	return m_PC;
 }
 
-uint8_t CPU::GetIR() const
+uint8_t CPU::GetStackPointer() const noexcept
+{
+	return m_StackPointer;
+}
+
+uint8_t CPU::GetIR() const noexcept
 {
 	return m_IR;
 }
 
-bool CPU::GetZeroFlag() const
+bool CPU::GetZeroFlag() const noexcept
 {
 	return m_ZeroFlag;
 }
 
-bool CPU::GetHaltFlag() const
+bool CPU::GetHaltFlag() const noexcept
 {
 	return m_HaltFlag;
+}
+
+bool CPU::GetCarryFlag() const noexcept
+{
+	return m_CarryFlag;
+}
+
+bool CPU::GetNegativeFlag() const noexcept
+{
+	return m_NegativeFlag;
+}
+
+bool CPU::GetOverflowFlag() const noexcept
+{
+	return m_OverflowFlag;
+}
+
+bool CPU::IsReadingInstruction() const noexcept
+{
+	return m_memoryUnit.Read(m_PC) == 0x02;
+}
+
+bool CPU::IsWritingInstruction() const noexcept
+{
+	return m_memoryUnit.Read(m_PC) == 0x03;
+}
+
+uint16_t CPU::ComputeAddress()
+{
+	uint8_t high = m_memoryUnit.Read(m_PC++);
+	uint8_t low = m_memoryUnit.Read(m_PC++);
+	return (high << 8) | low;
 }

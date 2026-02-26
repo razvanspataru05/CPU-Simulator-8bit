@@ -18,7 +18,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MemoryUnit memory;
     memory.ParseValues();
-    const std::array<uint8_t, 256> initialMemory = memory.GetMemory();
+    const std::array<uint8_t, 65536> initialMemory = memory.GetMemory();
 
     CPU cpu(memory);
     Dissasembler dissasembler;
@@ -117,9 +117,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         if (ImGui::BeginTable("MemoryTable", 16, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
-            for (size_t index = 0; index < 256; ++index)
+            for (size_t index = 0; index < memory.GetMemory().size(); ++index)
             {
                 ImGui::TableNextColumn();
+
+                if (index == cpu.GetPC() && !cpu.GetHaltFlag())
+                {
+                    ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 0, 255, 255));
+                }
+
+                if (cpu.IsReadingInstruction() && index == memory.Read(cpu.GetPC()+1))
+                {
+                    ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 255, 0, 255));
+                }
+                else if (cpu.IsWritingInstruction() && index == memory.Read(cpu.GetPC()+1))
+                {
+                    ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 0, 0, 255));
+                }
+
                 ImGui::Text("0x%02X", memory.Read(static_cast<uint8_t>(index)));
             }
             ImGui::EndTable();
