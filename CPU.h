@@ -11,6 +11,7 @@ public:
 
 	[[nodiscard]] uint8_t ReadRegister(uint8_t selector) const noexcept;
 	void WriteRegister(uint8_t selector, uint8_t value);
+
 	void UpdateFlags(uint8_t result);
 	void UpdateFlags(uint8_t result, uint8_t a, uint8_t opearand, bool isAdd);
 
@@ -21,7 +22,7 @@ public:
 	[[nodiscard]] uint8_t GetD() const noexcept;
 
 	[[nodiscard]] uint16_t GetPC() const noexcept;
-	[[nodiscard]] uint8_t GetStackPointer() const noexcept;
+	[[nodiscard]] uint8_t GetSP() const noexcept;
 	[[nodiscard]] uint8_t GetIR() const noexcept;
 
 	//Flag getters
@@ -45,7 +46,7 @@ private:
 	uint8_t m_C;
 	uint8_t m_D;
 
-	uint8_t m_StackPointer;
+	uint8_t m_SP;
 
 	uint16_t m_PC; // Program Counter registry
 	uint8_t m_IR; // Instruction registry

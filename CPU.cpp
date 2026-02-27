@@ -125,6 +125,8 @@ void CPU::Step()
 		return;
 	}
 
+	/* Logical operations */
+
 	case 0x20: // ADD_IM 2by
 	{
 		uint8_t operand = m_memoryUnit.Read(m_PC++);
@@ -230,7 +232,7 @@ void CPU::Step()
 		return;
 	}
 
-	case 0x29: //DEC 2by
+	case 0x29: // DEC 2by
 	{
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
 		uint8_t result = ReadRegister(selector) - 1;
@@ -251,6 +253,98 @@ void CPU::Step()
 		uint8_t selector = m_memoryUnit.Read(m_PC++);
 		m_A *= ReadRegister(selector);
 		UpdateFlags(m_A);
+		return;
+	}
+
+	/* Logical operations*/
+
+	case 0x30: // AND_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		m_A = m_A & operand;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x31: // AND_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_A = m_A & reg;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x32: // OR_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		m_A = m_A | operand;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x33: // OR_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_A = m_A | reg;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x34: // XOR_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		m_A = m_A ^ operand;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x35: // XOR_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_A = m_A ^ reg;
+		UpdateFlags(m_A);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x36: //NOT 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		reg = ~reg;
+		WriteRegister(selector, reg);
+		UpdateFlags(reg);
+		m_CarryFlag = false;
+		return;
+	}
+
+	case 0x37: //SHL 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_CarryFlag = (reg & 0x80) != 0;
+		reg = reg << 1;
+		WriteRegister(selector, reg);
+		UpdateFlags(reg);
+		return;
+	}
+
+	case 0x38: //SHR 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_CarryFlag = (reg & 0x01) != 0;
+		reg = reg >> 1;
+		WriteRegister(selector, reg);
+		UpdateFlags(reg);
 		return;
 	}
 
@@ -337,9 +431,9 @@ uint16_t CPU::GetPC() const noexcept
 	return m_PC;
 }
 
-uint8_t CPU::GetStackPointer() const noexcept
+uint8_t CPU::GetSP() const noexcept
 {
-	return m_StackPointer;
+	return m_SP;
 }
 
 uint8_t CPU::GetIR() const noexcept
