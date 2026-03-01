@@ -1,5 +1,6 @@
 #pragma once
 #include "MemoryUnit.h"
+#include <string>
 
 class CPU
 {
@@ -9,11 +10,7 @@ public:
 	void Step();
 	void Reset();
 
-	[[nodiscard]] uint8_t ReadRegister(uint8_t selector) const noexcept;
-	void WriteRegister(uint8_t selector, uint8_t value);
-
-	void UpdateFlags(uint8_t result);
-	void UpdateFlags(uint8_t result, uint8_t a, uint8_t opearand, bool isAdd);
+	uint16_t ComputeAddress(uint16_t programCounter);
 
 	//Registry getters
 	[[nodiscard]] uint8_t GetA() const noexcept;
@@ -36,7 +33,11 @@ public:
 	[[nodiscard]] bool IsWritingInstruction() const noexcept;
 
 private:
-	uint16_t ComputeAddress();
+	[[nodiscard]] uint8_t ReadRegister(uint8_t selector) const noexcept;
+	void WriteRegister(uint8_t selector, uint8_t value);
+
+	void UpdateFlags(uint8_t result);
+	void UpdateFlags(uint8_t result, uint8_t a, uint8_t opearand, bool isAdd);
 
 private:
 
@@ -46,7 +47,7 @@ private:
 	uint8_t m_C;
 	uint8_t m_D;
 
-	uint8_t m_SP;
+	uint8_t m_SP; // Stack Pointer
 
 	uint16_t m_PC; // Program Counter registry
 	uint8_t m_IR; // Instruction registry

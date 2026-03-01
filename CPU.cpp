@@ -15,16 +15,19 @@ void CPU::Step()
 
 	switch (m_IR)
 	{
-	case 0x00: // NOP 1by
-		return;
+
+	/* Load/Store instructions */
 
 	case 0x01: // LDA_IM 2by
+	{
 		m_A = m_memoryUnit.Read(m_PC++);
 		return;
-
+	}
+		
 	case 0x02: // LDA_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_A = m_memoryUnit.Read(address);
 		return;
 	}
@@ -38,7 +41,8 @@ void CPU::Step()
 
 	case 0x04: // STA_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_memoryUnit.Write(address, m_A);
 		return;
 	}
@@ -52,7 +56,8 @@ void CPU::Step()
 
 	case 0x06: // LDB_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_B = m_memoryUnit.Read(address);
 		return;
 	}
@@ -66,7 +71,8 @@ void CPU::Step()
 
 	case 0x08: // STB_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_memoryUnit.Write(address, m_B);
 		return;
 	}
@@ -79,7 +85,8 @@ void CPU::Step()
 
 	case 0x0A: // LDC_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_C = m_memoryUnit.Read(address);
 		return;
 	}
@@ -93,7 +100,8 @@ void CPU::Step()
 
 	case 0x0C: // STC_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_memoryUnit.Write(address, m_C);
 		return;
 	}
@@ -106,7 +114,8 @@ void CPU::Step()
 
 	case 0x0E: // LDD_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_D = m_memoryUnit.Read(address);
 		return;
 	}
@@ -120,7 +129,8 @@ void CPU::Step()
 
 	case 0x10: // STD_DIR 3by
 	{
-		uint16_t address = ComputeAddress();
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
 		m_memoryUnit.Write(address, m_D);
 		return;
 	}
@@ -348,6 +358,168 @@ void CPU::Step()
 		return;
 	}
 
+	/* Compare instructions */
+
+	case 0x40: // CMP_IM 2by
+	{
+		uint8_t operand = m_memoryUnit.Read(m_PC++);
+		uint8_t result = m_A - operand;
+		m_CarryFlag = (operand > m_A);
+		UpdateFlags(result, m_A, operand, false);
+		return;
+	}
+
+	case 0x41: // CMP_REG 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		uint8_t result = m_A - reg;
+		m_CarryFlag = (reg > m_A);
+		UpdateFlags(result, m_A, reg, false);
+		return;
+	}
+
+	/* Jump/Branch instructions */
+	
+	case 0x50: // JMP 3by
+	{
+		uint8_t high = m_memoryUnit.Read(m_PC++);
+		uint8_t low = m_memoryUnit.Read(m_PC++);
+		uint16_t address = (high << 8) | low;
+		m_PC = address;
+		return;
+	}
+
+	case 0x51: // JZ 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (m_ZeroFlag) m_PC = address;
+		return;
+	}
+
+	case 0x52: // JNZ 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (!m_ZeroFlag) m_PC = address;
+		return;
+	}
+
+	case 0x53: // JC 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (m_CarryFlag) m_PC = address;
+		return;
+	}
+
+	case 0x54: // JNC 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (!m_CarryFlag) m_PC = address;
+		return;
+	}
+
+	case 0x55: // JN 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (m_NegativeFlag) m_PC = address;
+		return;
+	}
+
+	case 0x56: // JNN 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (!m_NegativeFlag) m_PC = address;
+		return;
+	}
+
+	case 0x57: // JO 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (m_OverflowFlag) m_PC = address;
+		return;
+	}
+
+	case 0x58: // JNO 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+
+		if (!m_OverflowFlag) m_PC = address;
+		return;
+	}
+
+	/* Stack instructions */
+
+	case 0x60: // PUSH 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		m_memoryUnit.Write(m_SP--, reg);
+		return;
+	}
+
+	case 0x61: // POP 2by
+	{
+		uint8_t selector = m_memoryUnit.Read(m_PC++);
+		uint8_t reg = ReadRegister(selector);
+		reg = m_memoryUnit.Read(++m_SP);
+		WriteRegister(selector, reg);
+		return;
+	}
+
+	case 0x62: // CALL 3by
+	{
+		uint16_t address = ComputeAddress(m_PC);
+		m_PC += 2;
+		m_memoryUnit.Write(m_SP--, (m_PC >> 8) & 0xFF);
+		m_memoryUnit.Write(m_SP--, m_PC & 0xFF);
+		m_PC = address;
+		return;
+	}
+
+	case 0x63: // RET 1by
+	{
+		uint8_t low = m_memoryUnit.Read(m_SP++);
+		uint8_t high = m_memoryUnit.Read(m_SP++);
+		m_PC = (high << 8) | low;
+		return;
+	}
+
+	/* Misc instructions */
+
+	case 0x00: // NOP 1by
+	{
+		return;
+	}
+
+	case 0x70: // MOV 3by
+	{
+		uint8_t destination = m_memoryUnit.Read(m_PC++);
+		uint8_t source = m_memoryUnit.Read(m_PC++);
+		WriteRegister(destination, ReadRegister(source));
+		return;
+	}
+
+	case 0xFF: // HLT 1by
+	{
+		m_HaltFlag = true;
+		return;
+	}
+
 	}
 }
 
@@ -358,7 +530,9 @@ void CPU::Reset()
 	m_C = 0u;
 	m_D = 0u;
 	m_PC = 0u;
+	m_SP = 0u;
 	m_IR = 0u;
+
 	m_ZeroFlag = false;
 	m_CarryFlag = false;
 	m_NegativeFlag = false;
@@ -473,12 +647,12 @@ bool CPU::IsReadingInstruction() const noexcept
 
 bool CPU::IsWritingInstruction() const noexcept
 {
-	return m_memoryUnit.Read(m_PC) == 0x03;
+	return m_memoryUnit.Read(m_PC) == 0x04;
 }
 
-uint16_t CPU::ComputeAddress()
+uint16_t CPU::ComputeAddress(uint16_t programCounter)
 {
-	uint8_t high = m_memoryUnit.Read(m_PC++);
-	uint8_t low = m_memoryUnit.Read(m_PC++);
+	uint8_t high = m_memoryUnit.Read(programCounter++);
+	uint8_t low = m_memoryUnit.Read(programCounter++);
 	return (high << 8) | low;
 }
