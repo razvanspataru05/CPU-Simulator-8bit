@@ -45,6 +45,9 @@
     <ClInclude Include="Dissasembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EditorUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CPU Simulator.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui-SFML.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -134,6 +134,7 @@
     <ClInclude Include="CPU Simulator.h" />
     <ClInclude Include="CPU.h" />
     <ClInclude Include="Dissasembler.h" />
+    <ClInclude Include="EditorUI.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="InstructionDef.h" />
     <ClInclude Include="MemoryUnit.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="CPU Simulator.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="Dissasembler.cpp" />
+    <ClCompile Include="EditorUI.cpp" />
     <ClCompile Include="include\imgui-SFML.cpp" />
     <ClCompile Include="include\imgui.cpp" />
     <ClCompile Include="include\imgui_draw.cpp" />

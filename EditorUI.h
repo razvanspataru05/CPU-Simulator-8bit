@@ -1,0 +1,16 @@
+#pragma once
+#include "CPU.h"
+#include "MemoryUnit.h"
+#include "Dissasembler.h"
+#include "SFML/Graphics.hpp"
+#include "imgui.h"
+#include "imgui-SFML.h"
+
+namespace EditorUI
+{
+	void DrawCpuState(const CPU& cpu);
+	void DrawDissasembler(const MemoryUnit& memoryUnit, const Dissasembler& dissasembler, const CPU& cpu);
+	void DrawMemoryView(const MemoryUnit& memoryUnit, CPU& cpu);
+	void DrawMenu(MemoryUnit& memoryUnit, const std::array<uint8_t, 65536>& initialMemory, bool executeAuto, CPU& cpu);
+	void DrawSpeedSlider(float speed);
+}
