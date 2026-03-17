@@ -519,7 +519,6 @@ void CPU::Step()
 		m_HaltFlag = true;
 		return;
 	}
-
 	}
 }
 
