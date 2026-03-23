@@ -10,8 +10,6 @@ struct ISAEntry
 
 static const ISAEntry isaTable[] = {
 
-    {"NOP", 0x00, 1, "No operation"},
-
     /* Load / Store instructions */
     {"LDA_IM", 0x01, 2, "Loads immediate value into register A"},
     {"LDA_DIR", 0x02, 3, "Loads value at immediate memory address into register A"},
@@ -77,6 +75,7 @@ static const ISAEntry isaTable[] = {
     {"RET", 0x63, 1, "Assigns the return address to PC"},
 
     /* Misc */
+    {"NOP", 0x00, 1, "No operation"},
     {"MOV", 0x70, 3, "Copies the value of a register to another register"},
     {"HLT", 0XFF, 1, "Stops the execution of the program"}
 };

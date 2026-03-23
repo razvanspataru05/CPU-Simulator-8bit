@@ -13,4 +13,5 @@ namespace EditorUI
 	void DrawMemoryView(const MemoryUnit& memoryUnit, CPU& cpu, bool& followPC);
 	void DrawMenu(MemoryUnit& memoryUnit, const std::array<uint8_t, 65536>& initialMemory, bool& executeAuto, bool& followPC, CPU& cpu);
 	void DrawSpeedSlider(float& speed);
+	void DrawHelpMenu();
 }

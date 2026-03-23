@@ -1,7 +1,9 @@
 #include "EditorUI.h"
 
+uint8_t helperPage = 1u;
 uint16_t currentPage{};
 constexpr uint16_t PAGE_SIZE = 256u;
+bool visibility = false;
 
 static const char* FlagToStr(bool value)
 {
@@ -154,11 +156,96 @@ namespace EditorUI
 			followPC = !followPC;
 		}
 		ImGui::End();
+
+		ImGui::Begin("Help");
+		if (ImGui::Button("Help"))
+		{
+			visibility = true;
+		}
+		ImGui::End();
 	}
 	void DrawSpeedSlider(float& speed)
 	{
 		ImGui::Begin("Speed Slider");
 		ImGui::SliderFloat("Speed (seconds)", &speed, 0.1f, 2.0f);
 		ImGui::End();
+	}
+	void DrawHelpMenu()
+	{
+		if (visibility)
+		{
+			ImGui::Begin("Help Menu");
+			std::string pageText = "Page " + std::to_string(helperPage) + "/7";
+			float windowWidth = ImGui::GetWindowSize().x;
+			float textWidth = ImGui::CalcTextSize(pageText.c_str()).x;
+			float navButtonWidth = ImGui::CalcTextSize(">").x + ImGui::GetStyle().FramePadding.x * 2;
+			float buttonWidth = ImGui::CalcTextSize("X").x + ImGui::GetStyle().FramePadding.x * 2;
+
+			float centerX = (windowWidth - textWidth) * 0.5f;
+			ImGui::SetCursorPosX(centerX);
+			ImGui::Text(pageText.c_str());
+			ImGui::SameLine();
+
+			ImGui::SetCursorPosX(windowWidth - buttonWidth - ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button("X"))
+			{
+				visibility = false;
+			}
+
+			ImGui::SetCursorPosY(windowWidth * 0.055f - ImGui::GetStyle().WindowPadding.y);
+			if (ImGui::Button("<") && helperPage > 1)
+				helperPage--;
+
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(windowWidth - navButtonWidth - ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(windowWidth * 0.055f - ImGui::GetStyle().WindowPadding.y);
+			if (ImGui::Button(">") && helperPage < 7)
+				helperPage++;
+
+			switch (helperPage)
+			{
+			case 1u:
+			{
+				const char* title = "Glossary";
+				float titleWidth = ImGui::CalcTextSize(title).x;
+				ImGui::SetCursorPosX((windowWidth - titleWidth) * 0.5f);
+				ImGui::SetCursorPosY(windowWidth * 0.05f);
+				ImGui::Text(title);
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+
+				if (ImGui::BeginTable("glossary_table", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg))
+				{
+					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+					ImGui::TableSetupColumn("Definition", ImGuiTableColumnFlags_WidthStretch);
+					ImGui::TableHeadersRow();
+
+					static const std::pair<const char*, const char*> glossary[] =
+					{
+						{"PC", "Program Counter"},
+						{"IR", "Instruction Register"},
+						{"SP", "Stack Pointer"},
+						{"A", "Accumulator Register"},
+						{"B", ""},
+						{"C", "Counter Register"}
+					};
+
+					for (const auto& [mnemonic, definition] : glossary)
+					{
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), mnemonic);
+						ImGui::TableSetColumnIndex(1);
+						ImGui::TextWrapped(definition);
+					}
+					ImGui::EndTable();
+				}
+				break;
+			}
+
+			}
+			ImGui::End();
+		}
 	}
 }

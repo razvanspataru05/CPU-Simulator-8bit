@@ -73,6 +73,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		EditorUI::DrawMemoryView(memory, cpu, followPC);
 		EditorUI::DrawMenu(memory, initialMemory, executeAuto, followPC, cpu);
 		EditorUI::DrawSpeedSlider(speed);
+		EditorUI::DrawHelpMenu();
 
 		ImGui::SFML::Render(window);
 		window.display();
